@@ -1,90 +1,68 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>BTC Kindle Clock</title>
-    <meta http-equiv="refresh" content="60"> 
-    <style>
-        * { 
-            margin: 0; 
-            padding: 0; 
-            box-sizing: border-box; 
-        } 
-        
-        body, html {
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: white;
-            color: black;
-            font-family: "Amazon Ember", Helvetica, Arial, sans-serif;
-            overflow: hidden;
-        }
-
-        .container {
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>BTC Clock</title>
+    <meta http-equiv="refresh" content="60">
+    <style type="text/css">
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #FFFFFF;
+            color: #000000;
             text-align: center;
-            /* 关键修改：增加左右内边距，确保数字不挨着边 */
-            width: 100vw;
-            padding: 0 8vw; 
+            font-family: Arial, sans-serif;
         }
-
+        .container {
+            /* 垂直居中的原始写法，兼容旧版WebKit */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: auto;
+            margin-top: -150px; /* 根据高度微调 */
+            margin-left: -50%;
+        }
         #price {
-            /* 关键修改：将字号缩减至 13vw，确保 6 位数价格能完整显示 */
-            font-size: 13vw; 
+            font-size: 80px; /* 使用像素单位，防止旧版Kindle对vw计算出错 */
             font-weight: bold;
-            line-height: 1;
-            /* 稍微收紧字间距 */
-            letter-spacing: -0.2vw; 
-            white-space: nowrap;
+            display: block;
         }
-
         #time {
-            /* 时间字号也稍微缩小一点，更协调 */
-            font-size: 3.5vw;
-            margin-top: 10px;
-            color: #444;
+            font-size: 20px;
+            margin-top: 20px;
+            color: #333333;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div id="price">$--,---</div>
-        <div id="time">Connecting...</div>
+        <div id="time">Loading...</div>
     </div>
 
-    <script>
+    <script type="text/javascript">
         function getPrice() {
+            // 使用最古老的 XMLHttpRequest 写法，不使用 fetch
             var url = 'https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD&t=' + new Date().getTime();
-            var request = new XMLHttpRequest();
-            
-            request.open('GET', url, true);
-            request.timeout = 10000;
-
-            request.onload = function() {
-                if (request.status >= 200 && request.status < 400) {
-                    var data = JSON.parse(request.responseText);
-                    var priceStr = data.USD.toLocaleString('en-US', {
-                        minimumFractionDigits: 0, 
-                        maximumFractionDigits: 0
-                    });
-                    document.getElementById('price').innerText = "$" + priceStr;
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    var data = JSON.parse(xhr.responseText);
+                    var p = data.USD.toString();
+                    // 手动添加千分位，不使用 toLocaleString 防止低版本引擎不支持
+                    var formatted = p.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                    document.getElementById('price').innerHTML = "$" + formatted;
                     
                     var now = new Date();
-                    var hours = now.getHours();
-                    var minutes = (now.getMinutes() < 10 ? '0' : '') + now.getMinutes();
-                    document.getElementById('time').innerText = "Updated: " + hours + ":" + minutes;
-                } else {
-                    document.getElementById('time').innerText = "API Error";
+                    var m = now.getMinutes();
+                    document.getElementById('time').innerHTML = "Updated: " + now.getHours() + ":" + (m < 10 ? '0' + m : m);
                 }
             };
-
-            request.onerror = function() {
-                document.getElementById('time').innerText = "Network Error";
-            };
-
-            request.send();
+            xhr.send();
         }
+        // 立即执行一次
         getPrice();
     </script>
 </body>
