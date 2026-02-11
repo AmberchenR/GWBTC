@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>BTC Clock</title>
+    <meta http-equiv="refresh" content="60"> 
+    <style>
+        * { margin: 0; padding: 0; }
+        body, html {
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: white;
+            color: black;
+            overflow: hidden;
+        }
+        .container {
+            text-align: center;
+            width: 90%;
+        }
+        #price {
+            font-size: 20vw; /* 稍微缩小一点防止某些 Kindle 型号产生溢出滚动条 */
+            font-weight: bold;
+            font-family: "Amazon Ember", Helvetica, Arial, sans-serif;
+            line-height: 1.2;
+        }
+        #time {
+            font-size: 4vw;
+            margin-top: 10px;
+            color: #333; /* 稍微加深颜色，Kindle 灰度屏太浅了看不清 */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="price">--</div>
+        <div id="time">Connecting...</div>
+    </div>
+
+    <script>
+        function getPrice() {
+            // 增加随机参数 t，防止 Kindle 浏览器缓存旧的价格数据
+            var url = 'https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD&t=' + new Date().getTime();
+            var request = new XMLHttpRequest();
+            request.open('GET', url, true);
+            request.timeout = 10000; // 10秒超时
+            
+            request.onload = function() {
+                if (request.status >= 200 && request.status < 400) {
+                    var data = JSON.parse(request.responseText);
+                    var priceStr = data.USD.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+                    document.getElementById('price').innerText = "$" + priceStr;
+                    var now = new Date();
+                    document.getElementById('time').innerText = "Updated: " + now.getHours() + ":" + (now.getMinutes()<10?'0':'') + now.getMinutes();
+                } else {
+                    document.getElementById('time').innerText = "API Error";
+                }
+            };
+            
+            request.onerror = function() {
+                document.getElementById('time').innerText = "Network Error";
+            };
+            
+            request.send();
+        }
+        getPrice();
+    </script>
+</body>
+</html>
