@@ -1,11 +1,16 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>BTC Clock</title>
+    <title>BTC Kindle Clock</title>
     <meta http-equiv="refresh" content="60"> 
     <style>
-        * { margin: 0; padding: 0; }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        } 
+        
         body, html {
             height: 100%;
             display: flex;
@@ -13,55 +18,71 @@
             align-items: center;
             background-color: white;
             color: black;
+            font-family: "Amazon Ember", Helvetica, Arial, sans-serif;
             overflow: hidden;
         }
+
         .container {
             text-align: center;
-            width: 90%;
+            /* 关键修改：增加左右内边距，确保数字不挨着边 */
+            width: 100vw;
+            padding: 0 8vw; 
         }
+
         #price {
-            font-size: 20vw; /* 稍微缩小一点防止某些 Kindle 型号产生溢出滚动条 */
+            /* 关键修改：将字号缩减至 14vw，确保 6 位数价格能完整显示 */
+            font-size: 14vw; 
             font-weight: bold;
-            font-family: "Amazon Ember", Helvetica, Arial, sans-serif;
-            line-height: 1.2;
+            line-height: 1;
+            /* 稍微收紧字间距 */
+            letter-spacing: -0.2vw; 
+            white-space: nowrap;
         }
+
         #time {
-            font-size: 4vw;
+            /* 时间字号也稍微缩小一点，更协调 */
+            font-size: 3.5vw;
             margin-top: 10px;
-            color: #333; /* 稍微加深颜色，Kindle 灰度屏太浅了看不清 */
+            color: #444;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div id="price">--</div>
+        <div id="price">$--,---</div>
         <div id="time">Connecting...</div>
     </div>
 
     <script>
         function getPrice() {
-            // 增加随机参数 t，防止 Kindle 浏览器缓存旧的价格数据
             var url = 'https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD&t=' + new Date().getTime();
             var request = new XMLHttpRequest();
-            request.open('GET', url, true);
-            request.timeout = 10000; // 10秒超时
             
+            request.open('GET', url, true);
+            request.timeout = 10000;
+
             request.onload = function() {
                 if (request.status >= 200 && request.status < 400) {
                     var data = JSON.parse(request.responseText);
-                    var priceStr = data.USD.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+                    var priceStr = data.USD.toLocaleString('en-US', {
+                        minimumFractionDigits: 0, 
+                        maximumFractionDigits: 0
+                    });
                     document.getElementById('price').innerText = "$" + priceStr;
+                    
                     var now = new Date();
-                    document.getElementById('time').innerText = "Updated: " + now.getHours() + ":" + (now.getMinutes()<10?'0':'') + now.getMinutes();
+                    var hours = now.getHours();
+                    var minutes = (now.getMinutes() < 10 ? '0' : '') + now.getMinutes();
+                    document.getElementById('time').innerText = "Updated: " + hours + ":" + minutes;
                 } else {
                     document.getElementById('time').innerText = "API Error";
                 }
             };
-            
+
             request.onerror = function() {
                 document.getElementById('time').innerText = "Network Error";
             };
-            
+
             request.send();
         }
         getPrice();
